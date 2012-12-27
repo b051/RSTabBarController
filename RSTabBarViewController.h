@@ -23,6 +23,7 @@ typedef NS_OPTIONS(NSUInteger, RSTabBarTransitionStyle) {
 @property (nonatomic, readonly, weak) RSTabBar *tabBar;
 
 - (void)setTabBarHidden:(BOOL)hidden animated:(BOOL)animated;
+- (id)initWithTabBarClass:(Class)tabBarClass;
 
 @end
 

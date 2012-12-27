@@ -15,6 +15,7 @@
 @implementation RSTabBarViewController
 {
 	BOOL isTabBarHidden;
+	__weak Class _tabBarClass;
 }
 
 @dynamic selectedIndex;
@@ -33,6 +34,15 @@
 			self.selectedViewController = (self.viewControllers)[aSelectedIndex];
 		}
 	}
+}
+
+- (id)initWithTabBarClass:(Class)tabBarClass
+{
+	if (self = [super init]) {
+		NSAssert([tabBarClass isSubclassOfClass:[RSTabBar class]], @"tabBarClass must be a subclass of RSTabBar");
+		_tabBarClass = tabBarClass;
+	}
+	return self;
 }
 
 - (void)setSelectedViewController:(UIViewController *)newC
@@ -59,7 +69,7 @@
 		[self addChildViewController:newC];
 		CGRect newFrame = CGRectMake(0, 0, self.view.bounds.size.width, _tabBar.frame.origin.y);
 		CGRect endFrame = oldC.view.frame;
-
+		
 		if ((_transitionStyle & RSTabBarTransitionStyleHorizontal) == RSTabBarTransitionStyleHorizontal) {
 			NSInteger oldIndex = [self.viewControllers indexOfObject:oldC];
 			NSInteger newIndex = [self.viewControllers indexOfObject:newC];
@@ -170,7 +180,8 @@
 	
 	CGRect frame = self.view.bounds;
 	if (!_tabBar) {
-		RSTabBar *tabBar = [[RSTabBar alloc] initWithFrame:CGRectMake(0, frame.size.height - TABBAR_HEIGHT, frame.size.width, TABBAR_HEIGHT)];
+		if (!_tabBarClass) _tabBarClass = [RSTabBar class];
+		RSTabBar *tabBar = [[_tabBarClass alloc] initWithFrame:CGRectMake(0, frame.size.height - TABBAR_HEIGHT, frame.size.width, TABBAR_HEIGHT)];
 		_tabBar = tabBar;
 		_tabBar.delegate = self;
 		isTabBarHidden = NO;
