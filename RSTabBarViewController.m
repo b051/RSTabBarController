@@ -1,6 +1,5 @@
 //
 //  RSTabBarViewController.m
-//  Network
 //
 //  Created by Rex Sheng on 6/11/12.
 //  Copyright (c) 2012 lognllc.com. All rights reserved.
@@ -11,34 +10,23 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-
 #define TABBAR_HEIGHT 55
-
-@interface RSTabBarViewController () <RSTabBarDelegate, UIAlertViewDelegate>
-
-@property (nonatomic, strong) RSTabBar *tabBar;
-@property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) UIViewController *selectedViewController;
-
-@end
-
 
 @implementation RSTabBarViewController
 {
-	BOOL visible;
 	BOOL isTabBarHidden;
 }
 
-@synthesize viewControllers, selectedIndex, tabBar, contentView, selectedViewController;
+@dynamic selectedIndex;
 
 - (NSUInteger)selectedIndex
 {
-	return [self.viewControllers indexOfObject:self.selectedViewController];
+	return [_viewControllers indexOfObject:_selectedViewController];
 }
 
 - (void)setSelectedIndex:(NSUInteger)aSelectedIndex
 {
-	if (self.viewControllers.count > aSelectedIndex) {
+	if (_viewControllers.count > aSelectedIndex) {
 		if (self.tabBar) {
 			[self.tabBar.delegate tabBar:self.tabBar didSelectItemAtIndex:aSelectedIndex];
 		} else {
@@ -47,45 +35,75 @@
 	}
 }
 
-- (void)setSelectedViewController:(UIViewController *)viewController
+- (void)setSelectedViewController:(UIViewController *)newC
 {
 	SEL openInModalSEL = @selector(canOnlyBeOpenedInModal);
-	UIViewController *vc = viewController;
+	UIViewController *vc = newC;
 	if ([vc isKindOfClass:[UINavigationController class]]) {
 		vc = [(UINavigationController *)vc topViewController];
 	}
 	
 	if ([vc respondsToSelector:openInModalSEL]) {
 		if (((BOOL (*)(id, SEL))objc_msgSend)(vc, openInModalSEL)) {
-			[self presentModalViewController:viewController animated:YES];
+			[self presentModalViewController:newC animated:YES];
 			return;
 		}
 	}
 	
-	UIViewController *oldVC = selectedViewController;
-	if (selectedViewController != viewController) {
-		selectedViewController = viewController;
-		[selectedViewController RS_setTabBarViewController:self];
-		if (!self.childViewControllers && visible) {
-			[oldVC viewWillDisappear:NO];
-			[selectedViewController viewWillAppear:NO];
+	UIViewController *oldC = _selectedViewController;
+	if (oldC == newC) return;
+	_selectedViewController = newC;
+	[_selectedViewController setRS_tabBarViewController:self];
+	if ([self isViewLoaded]) {
+		[oldC willMoveToParentViewController:nil];
+		[self addChildViewController:newC];
+		CGRect newFrame = CGRectMake(0, 0, self.view.bounds.size.width, _tabBar.frame.origin.y);
+		CGRect endFrame = oldC.view.frame;
+
+		if ((_transitionStyle & RSTabBarTransitionStyleHorizontal) == RSTabBarTransitionStyleHorizontal) {
+			NSInteger oldIndex = [self.viewControllers indexOfObject:oldC];
+			NSInteger newIndex = [self.viewControllers indexOfObject:newC];
+			endFrame.origin.x = (oldIndex - newIndex) * CGRectGetMaxX(endFrame);
+			newFrame.origin.x = -endFrame.origin.x;
 		}
-		if ([self isViewLoaded])
-			[self setContentViewFromViewController:viewController];
-		if (!self.childViewControllers && visible) {
-			[oldVC viewDidDisappear:NO];
-			[selectedViewController viewDidAppear:NO];
+		if ((_transitionStyle & RSTabBarTransitionStyleVertical) == RSTabBarTransitionStyleVertical) {
+			NSInteger oldIndex = [self.viewControllers indexOfObject:oldC];
+			NSInteger newIndex = [self.viewControllers indexOfObject:newC];
+			endFrame.origin.y = (oldIndex - newIndex) * CGRectGetMaxY(endFrame);
+			newFrame.origin.y = -endFrame.origin.y;
 		}
-		[tabBar setSelectedTab:self.selectedIndex animated:oldVC != nil];
+		BOOL fadeInOut = (_transitionStyle & RSTabBarTransitionStyleFade) == RSTabBarTransitionStyleFade;
+		
+		newC.view.frame = newFrame;
+		newC.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleWidth;
+		if (fadeInOut && oldC) newC.view.alpha = 0;
+		if (oldC) [self transitionFromViewController:oldC toViewController:newC duration:0.25 options:0 animations:^{
+			newC.view.frame = oldC.view.frame;
+			oldC.view.frame = endFrame;
+			if (fadeInOut) {
+				newC.view.alpha = 1;
+				oldC.view.alpha = 0;
+			}
+		} completion:^(BOOL finished) {
+			[oldC removeFromParentViewController];
+			[self.view sendSubviewToBack:newC.view];
+			[newC didMoveToParentViewController:self];
+		}];
+		else {
+			[self.view addSubview:newC.view];
+			[self.view sendSubviewToBack:newC.view];
+			[newC didMoveToParentViewController:self];
+		}
 	}
+	[_tabBar setSelectedTab:self.selectedIndex animated:oldC != nil];
 }
 
 - (void)setViewControllers:(NSArray *)array
 {
-	if (array != viewControllers) {
-		viewControllers = array;
+	if (array != _viewControllers) {
+		_viewControllers = array;
 		
-		if (viewControllers != nil) {
+		if (_viewControllers != nil) {
 			[self loadTabs];
 		}
 	}
@@ -96,28 +114,26 @@
 	if (isTabBarHidden != hidden) {
 		CGSize size = self.view.bounds.size;
 		isTabBarHidden = hidden;
-		CGRect frame = tabBar.frame;
+		CGRect frame = _tabBar.frame;
 		if (hidden) {
 			frame.origin.y = size.height;
 		} else {
 			frame.origin.y = size.height - frame.size.height;
 		}
-		contentView.frame = CGRectMake(0, 0, size.width, frame.origin.y);
-		[contentView setNeedsLayout];
+		_selectedViewController.view.frame = CGRectMake(0, 0, size.width, frame.origin.y);
 		[UIView animateWithDuration:animated ? .3 : 0 animations:^{
-			tabBar.frame = frame;
+			_tabBar.frame = frame;
 		}];
 	}
 }
 
-- (void)setContentViewFromViewController:(UIViewController *)viewController
+- (void)displayContentController:(UIViewController *)content
 {
-	[contentView removeFromSuperview];
-	contentView = viewController.view;
-	contentView.frame = CGRectMake(0, 0, self.view.bounds.size.width, tabBar.frame.origin.y);
-	contentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleWidth;
-	[self.view addSubview:contentView];
-	[self.view sendSubviewToBack:contentView];
+	[self addChildViewController:content];
+	content.view.frame = CGRectMake(0, 0, self.view.bounds.size.width, _tabBar.frame.origin.y);
+	content.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleWidth;
+	[self.view addSubview:content.view];
+	[content didMoveToParentViewController:self];
 }
 
 #pragma mark - TabBar Delegate
@@ -153,47 +169,23 @@
 	[super viewDidLoad];
 	
 	CGRect frame = self.view.bounds;
-	if (!tabBar) {
-		tabBar = [[RSTabBar alloc] initWithFrame:CGRectMake(0, frame.size.height - TABBAR_HEIGHT, frame.size.width, TABBAR_HEIGHT)];
-		tabBar.delegate = self;
+	if (!_tabBar) {
+		RSTabBar *tabBar = [[RSTabBar alloc] initWithFrame:CGRectMake(0, frame.size.height - TABBAR_HEIGHT, frame.size.width, TABBAR_HEIGHT)];
+		_tabBar = tabBar;
+		_tabBar.delegate = self;
 		isTabBarHidden = NO;
-		tabBar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
+		_tabBar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
 		[self loadTabs];
-		[self.view addSubview:tabBar];
+		[self.view addSubview:_tabBar];
 	}
-}
-
-- (void)viewDidUnload
-{
-	[super viewDidUnload];
-	tabBar = nil;
-	contentView = nil;
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
 	NSUInteger index = self.selectedIndex;
-	selectedViewController = nil;
-	[self tabBar:tabBar didSelectItemAtIndex:index];
-	visible = YES;
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-	[super viewWillDisappear:animated];
-	
-	if (!self.childViewControllers)
-		[selectedViewController viewWillDisappear:animated];
-}
-
-- (void)viewDidDisappear:(BOOL)animated
-{
-	[super viewDidDisappear:animated];
-	
-	if (![self respondsToSelector:@selector(addChildViewController:)])
-		[selectedViewController viewDidDisappear:animated];
-	visible = NO;
+	_selectedViewController = nil;
+	[self tabBar:_tabBar didSelectItemAtIndex:index];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation {
@@ -232,7 +224,7 @@ static char kRSTabBarViewController;
 	return objc_getAssociatedObject(self, &kRSTabBarViewController);
 }
 
-- (void)RS_setTabBarViewController:(RSTabBarViewController *)vc
+- (void)setRS_tabBarViewController:(RSTabBarViewController *)vc
 {
 	objc_setAssociatedObject(self, &kRSTabBarViewController, vc, OBJC_ASSOCIATION_ASSIGN);
 }
