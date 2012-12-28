@@ -14,6 +14,10 @@ typedef NS_OPTIONS(NSUInteger, RSTabBarTransitionStyle) {
 	RSTabBarTransitionStyleFade = 1 << 2,
 };
 
+
+@protocol RSTabBarModalOnlyTrait
+@end
+
 @interface RSTabBarViewController : UIViewController <RSTabBarDelegate>
 
 @property (nonatomic, strong) NSArray *viewControllers;

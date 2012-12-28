@@ -8,7 +8,6 @@
 #import "RSTabBarViewController.h"
 #import "RSTabBar.h"
 #import <objc/runtime.h>
-#import <objc/message.h>
 
 #define TABBAR_HEIGHT 55
 
@@ -47,17 +46,13 @@
 
 - (void)setSelectedViewController:(UIViewController *)newC
 {
-	SEL openInModalSEL = @selector(canOnlyBeOpenedInModal);
 	UIViewController *vc = newC;
 	if ([vc isKindOfClass:[UINavigationController class]]) {
 		vc = [(UINavigationController *)vc topViewController];
 	}
-	
-	if ([vc respondsToSelector:openInModalSEL]) {
-		if (((BOOL (*)(id, SEL))objc_msgSend)(vc, openInModalSEL)) {
-			[self presentModalViewController:newC animated:YES];
-			return;
-		}
+	if ([vc conformsToProtocol:@protocol(RSTabBarModalOnlyTrait)]) {
+		[self presentModalViewController:newC animated:YES];
+		return;
 	}
 	
 	UIViewController *oldC = _selectedViewController;
