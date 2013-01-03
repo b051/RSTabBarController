@@ -62,7 +62,8 @@
 	if ([self isViewLoaded]) {
 		[oldC willMoveToParentViewController:nil];
 		[self addChildViewController:newC];
-		CGRect newFrame = CGRectMake(0, 0, self.view.bounds.size.width, _tabBar.frame.origin.y);
+		CGRect frame = CGRectMake(0, 0, self.view.bounds.size.width, _tabBar.frame.origin.y);
+		CGRect newFrame = frame;
 		CGRect endFrame = oldC.view.frame;
 		
 		if ((_transitionStyle & RSTabBarTransitionStyleHorizontal) == RSTabBarTransitionStyleHorizontal) {
@@ -83,7 +84,7 @@
 		newC.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleWidth;
 		if (fadeInOut && oldC) newC.view.alpha = 0;
 		if (oldC) [self transitionFromViewController:oldC toViewController:newC duration:0.25 options:0 animations:^{
-			newC.view.frame = oldC.view.frame;
+			newC.view.frame = frame;
 			oldC.view.frame = endFrame;
 			if (fadeInOut) {
 				newC.view.alpha = 1;
