@@ -46,6 +46,13 @@
 
 - (void)setSelectedViewController:(UIViewController *)newC
 {
+	static dispatch_once_t onceToken;
+	static dispatch_group_t group;
+	dispatch_once(&onceToken, ^{
+		group = dispatch_group_create();
+	});
+	if (dispatch_group_wait(group, DISPATCH_TIME_NOW)) return;
+	
 	UIViewController *vc = newC;
 	if ([vc isKindOfClass:[UINavigationController class]]) {
 		vc = [(UINavigationController *)vc topViewController];
@@ -57,9 +64,12 @@
 	
 	UIViewController *oldC = _selectedViewController;
 	if (oldC == newC) return;
+	
 	_selectedViewController = newC;
 	[_selectedViewController setRS_tabBarViewController:self];
+	
 	if ([self isViewLoaded]) {
+		dispatch_group_enter(group);
 		[oldC willMoveToParentViewController:nil];
 		[self addChildViewController:newC];
 		CGRect frame = CGRectMake(0, 0, self.view.bounds.size.width, _tabBar.frame.origin.y);
@@ -94,11 +104,13 @@
 			[oldC removeFromParentViewController];
 			[self.view sendSubviewToBack:newC.view];
 			[newC didMoveToParentViewController:self];
+			dispatch_group_leave(group);
 		}];
 		else {
 			[self.view addSubview:newC.view];
 			[self.view sendSubviewToBack:newC.view];
 			[newC didMoveToParentViewController:self];
+			dispatch_group_leave(group);
 		}
 	}
 	[_tabBar setSelectedTab:self.selectedIndex animated:oldC != nil];
