@@ -58,8 +58,7 @@
 		vc = [(UINavigationController *)vc topViewController];
 	}
 	if ([vc conformsToProtocol:@protocol(RSTabBarModalOnlyTrait)]) {
-		[self presentModalViewController:newC animated:YES];
-		return;
+		[self presentViewController:newC animated:YES completion:nil];
 	}
 	
 	UIViewController *oldC = _selectedViewController;
