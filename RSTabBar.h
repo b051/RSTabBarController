@@ -14,6 +14,8 @@
 @property (nonatomic, weak) id<RSTabBarDelegate> delegate;
 @property (nonatomic, copy) NSArray *tabs;
 @property (nonatomic) CGFloat tabBarHeight UI_APPEARANCE_SELECTOR;
+@property (nonatomic, strong) UIColor *borderBackgroundColor UI_APPEARANCE_SELECTOR;
+@property (nonatomic) CGFloat borderBackgroundWidth UI_APPEARANCE_SELECTOR;
 
 - (void)setSelectedTab:(NSUInteger)tabIndex animated:(BOOL)animated;
 

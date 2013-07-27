@@ -17,9 +17,20 @@
 	self = [super initWithFrame:frame];
 	if (self) {
 		self.backgroundColor = [UIColor blackColor];
+		_borderBackgroundWidth = 1;
 		selectedTab = NSNotFound;
 	}
 	return self;
+}
+
+- (void)setBorderBackgroundColor:(UIColor *)borderBackgroundColor
+{
+	self.backgroundColor = borderBackgroundColor;
+}
+
+- (UIColor *)borderBackgroundColor
+{
+	return self.backgroundColor;
 }
 
 - (void)setTabBarHeight:(CGFloat)tabBarHeight
@@ -39,12 +50,17 @@
 	
 	NSMutableArray *newTabs = [NSMutableArray arrayWithCapacity:tabs.count];
 	int i = 0;
-	CGFloat height = self.bounds.size.height;
-	CGFloat perWidth = self.bounds.size.width / tabs.count;
+	CGFloat height = self.bounds.size.height - _borderBackgroundWidth;
+	CGFloat perWidth = (self.bounds.size.width - (tabs.count - 1) * _borderBackgroundWidth) / tabs.count;
+	CGFloat x = 0;
 	for (UITabBarItem *tab in tabs) {
 		UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-		button.frame = CGRectMake(i * perWidth, 0, perWidth, height);
+		button.frame = CGRectMake(x, _borderBackgroundWidth, perWidth, height);
+		x += perWidth + _borderBackgroundWidth;
 		button.autoresizingMask = UIViewAutoresizingFlexibleHeight;
+		[button setTitle:tab.title forState:UIControlStateNormal];
+		[button setImage:tab.finishedUnselectedImage forState:UIControlStateNormal];
+		[button setImage:tab.finishedSelectedImage forState:UIControlStateSelected];
 		if ([self.delegate respondsToSelector:@selector(customizeButton:fromTabBarItem:atIndex:)])
 			[self.delegate customizeButton:button fromTabBarItem:tab atIndex:i];
 		[self addSubview:button];
@@ -53,7 +69,6 @@
 		i++;
 	}
 	_tabs = newTabs;
-	[self setNeedsLayout];
 	if ([self.delegate respondsToSelector:@selector(tabBarDidLoad:)])
 		[self.delegate tabBarDidLoad:self];
 }
@@ -80,21 +95,6 @@
 - (void)tabSelected:(UIButton *)sender
 {
 	[self.delegate tabBar:self didSelectItemAtIndex:[self.tabs indexOfObject:sender]];
-}
-
-- (void)layoutSubviews
-{
-	CGFloat defaultWidth = self.bounds.size.width / _tabs.count;
-	CGFloat x = 0;
-	for (UIButton *tab in _tabs) {
-		CGRect frame = tab.frame;
-		frame.origin.x = x;
-		if (!frame.size.width) {
-			frame.size.width = defaultWidth;
-		}
-		x += frame.size.width;
-		tab.frame = frame;
-	}
 }
 
 @end
