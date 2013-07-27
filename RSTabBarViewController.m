@@ -149,12 +149,9 @@
 	self.selectedViewController = (self.viewControllers)[index];
 }
 
-- (void)customizeButton:(UIButton *)button fromTabBarItem:(UITabBarItem *)tabBarItem atIndex:(NSUInteger)index
-{
-}
-
 - (void)tabBarDidLoad:(RSTabBar *)tabBar
 {
+	
 }
 
 - (void)loadTabs
