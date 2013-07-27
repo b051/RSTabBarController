@@ -14,7 +14,6 @@ typedef NS_OPTIONS(NSUInteger, RSTabBarTransitionStyle) {
 	RSTabBarTransitionStyleFade = 1 << 2,
 };
 
-
 @protocol RSTabBarModalOnlyTrait
 @end
 
@@ -27,7 +26,6 @@ typedef NS_OPTIONS(NSUInteger, RSTabBarTransitionStyle) {
 @property (nonatomic, readonly, weak) RSTabBar *tabBar;
 
 - (void)setTabBarHidden:(BOOL)hidden animated:(BOOL)animated;
-- (id)initWithTabBarClass:(Class)tabBarClass;
 
 @end
 

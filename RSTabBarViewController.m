@@ -14,7 +14,6 @@
 @implementation RSTabBarViewController
 {
 	BOOL isTabBarHidden;
-	__weak Class _tabBarClass;
 }
 
 @dynamic selectedIndex;
@@ -33,15 +32,6 @@
 			self.selectedViewController = (self.viewControllers)[aSelectedIndex];
 		}
 	}
-}
-
-- (id)initWithTabBarClass:(Class)tabBarClass
-{
-	if (self = [super init]) {
-		NSAssert([tabBarClass isSubclassOfClass:[RSTabBar class]], @"tabBarClass must be a subclass of RSTabBar");
-		_tabBarClass = tabBarClass;
-	}
-	return self;
 }
 
 - (void)setSelectedViewController:(UIViewController *)newC
