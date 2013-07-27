@@ -9,7 +9,7 @@
 #import "RSTabBar.h"
 #import <objc/runtime.h>
 
-#define TABBAR_HEIGHT 55
+#define TABBAR_HEIGHT 44
 
 @implementation RSTabBarViewController
 {
@@ -187,8 +187,7 @@
 	
 	CGRect frame = self.view.bounds;
 	if (!_tabBar) {
-		if (!_tabBarClass) _tabBarClass = [RSTabBar class];
-		RSTabBar *tabBar = [[_tabBarClass alloc] initWithFrame:CGRectMake(0, frame.size.height - TABBAR_HEIGHT, frame.size.width, TABBAR_HEIGHT)];
+		RSTabBar *tabBar = [[RSTabBar alloc] initWithFrame:CGRectMake(0, frame.size.height - TABBAR_HEIGHT, frame.size.width, TABBAR_HEIGHT)];
 		_tabBar = tabBar;
 		_tabBar.delegate = self;
 		isTabBarHidden = NO;

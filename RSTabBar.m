@@ -22,16 +22,29 @@
 	return self;
 }
 
+- (void)setTabBarHeight:(CGFloat)tabBarHeight
+{
+	_tabBarHeight = tabBarHeight;
+	CGRect frame = self.frame;
+	frame.origin.y += frame.size.height - tabBarHeight;
+	frame.size.height = tabBarHeight;
+	self.frame = frame;
+}
+
 - (void)setTabs:(NSArray *)tabs
 {
 	for (UIView *subview in _tabs) {
 		[subview removeFromSuperview];
 	}
 	
-	NSMutableArray *newTabs = [NSMutableArray array];
+	NSMutableArray *newTabs = [NSMutableArray arrayWithCapacity:tabs.count];
 	int i = 0;
+	CGFloat height = self.bounds.size.height;
+	CGFloat perWidth = self.bounds.size.width / tabs.count;
 	for (UITabBarItem *tab in tabs) {
 		UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+		button.frame = CGRectMake(i * perWidth, 0, perWidth, height);
+		button.autoresizingMask = UIViewAutoresizingFlexibleHeight;
 		if ([self.delegate respondsToSelector:@selector(customizeButton:fromTabBarItem:atIndex:)])
 			[self.delegate customizeButton:button fromTabBarItem:tab atIndex:i];
 		[self addSubview:button];

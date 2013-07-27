@@ -13,6 +13,7 @@
 
 @property (nonatomic, weak) id<RSTabBarDelegate> delegate;
 @property (nonatomic, copy) NSArray *tabs;
+@property (nonatomic) CGFloat tabBarHeight UI_APPEARANCE_SELECTOR;
 
 - (void)setSelectedTab:(NSUInteger)tabIndex animated:(BOOL)animated;
 
